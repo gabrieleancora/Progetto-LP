@@ -58,17 +58,14 @@ nfa_regexp_comp(FA_ID, RE) :- divisina(FA_ID, RE).
 
 %StartID e EndID sono dell'OR locale 
 
-/*
-divisina_automa(FA_ID, [X | _], StartID, EndID) :- print("dio"),
-                [X] =.. ['[|]' | B],
-               crea_stati_segno(FA_ID, [X | Y], StartID, EndID).
+divisina_automa(FA_ID, [X | Y], StartID, EndID) :- X =.. [A | []],
+                                                    crea_stati_segno(FA_ID, [X | Y], StartID, EndID).
 
-divisina_automa(FA_ID, [RE | _], StartID, EndID) :- print("bau"),
-RE =.. [X | Y],
-                crea_stati_segno(FA_ID, [X | Y], StartID, EndID).
-*/
+divisina_automa(FA_ID, [X | Y], StartID, EndID) :- X =.. [A | B],
+                                                    crea_stati_segno(FA_ID, [A | B], StartID, EndID).
 
-divisina_automa(FA_ID, [X | Y], StartID, EndID) :- crea_stati_segno(FA_ID, [X | Y], StartID, EndID).
+% divisina_automa(FA_ID, [X | Y], StartID, EndID) :- compound(X), 
+%                                                    crea_stati_segno(FA_ID, [X | Y], StartID, EndID).
 
 
 %OR con primo elemento ATOMICO BOOOOM
@@ -89,7 +86,8 @@ crea_stati_segno(FA_ID, ['/' | Y], StartID, EndID) :- Y = [A | B],
                                                       gensym(FA_ID, StatoUno),
                                                       gensym(FA_ID, StatoDue),
                                                       assert(delta(FA_ID, StartID, epsilonMossa, StatoUno)),
-                                                      divisina_automa(FA_ID, A, StatoUno, StatoDue),
+                                                      A = [J | K],
+                                                      divisina_automa(FA_ID, [J | K], StatoUno, StatoDue),
                                                       assert(delta(FA_ID, StatoUno, epsilonMossa, EndID)),
                                                       crea_stati_segno(FA_ID, ['/' | B], StartID, EndID).
                                                                                                             
@@ -113,7 +111,7 @@ crea_stati_segno(FA_ID, ['*' | Y], StartID, EndID) :- compound(Y),
                                                       assert(delta(FA_ID, StatoDue, epsilonMossa, EndID)),
                                                       assert(delta(FA_ID, StatoDue, epsilonMossa, StatoUno)),
                                                       assert(delta(FA_ID, StartID, epsilonMossa, EndID)),
-                                                      divisina_automa(FA_ID, Y, StatoUno, StatoDue).
+                                                      divisina_automa(FA_ID, [Y], StatoUno, StatoDue).
 
 %PLUS atomico BOOOOM
 crea_stati_segno(FA_ID, ['+' | Y], StartID, EndID) :- atomic(Y),
@@ -133,7 +131,8 @@ crea_stati_segno(FA_ID, ['+' | Y], StartID, EndID) :- compound(Y),
                                                       assert(delta(FA_ID, StartID, epsilonMossa , StatoUno)),
                                                       assert(delta(FA_ID, StatoDue, epsilonMossa, EndID)),
                                                       assert(delta(FA_ID, StatoDue, epsilonMossa, StatoUno)),
-                                                      divisina_automa(FA_ID, Y, StatoUno, StatoDue).
+                                                      Y = [J | K],
+                                                      divisina_automa(FA_ID, [J | K], StatoUno, StatoDue).
 
 %SEQ 
 crea_stati_segno(FA_ID, [X | []], StartID, EndID) :- atomic(X),
@@ -145,7 +144,7 @@ crea_stati_segno(FA_ID, [X | []], StartID, EndID) :- atomic(X),
 crea_stati_segno(FA_ID, [X | []], StartID, EndID) :- compound(X),
                                                       print("seq comp vuoto"),
                                                       gensym(FA_ID, StatoUno),
-                                                      divisina_automa(FA_ID, X, StartID, StatoUno),
+                                                      divisina_automa(FA_ID, [X], StartID, StatoUno),
                                                       assert(delta(FA_ID, StatoUno, epsilonMossa, EndID)).
 
 crea_stati_segno(FA_ID, [X | Y], StartID, EndID) :- atomic(X),
@@ -160,7 +159,7 @@ crea_stati_segno(FA_ID, [X | Y], StartID, EndID) :- compound(X),
                                                     print("seq comp"),
                                                     gensym(FA_ID, StatoUno),
                                                     gensym(FA_ID, StatoDue),
-                                                    divisina_automa(FA_ID, X, StartID, StatoUno),
+                                                    divisina_automa(FA_ID, [X], StartID, StatoUno),
                                                     assert(delta(FA_ID, StatoUno, epsilonMossa, StatoDue)),
                                                     crea_stati_segno(FA_ID, Y, StatoDue, EndID).
 
