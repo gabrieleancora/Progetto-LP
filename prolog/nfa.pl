@@ -48,6 +48,11 @@ divisina(FA_ID, RE) :-
         is_regexp([X | Y]),
         nfa_crea_automa(FA_ID, [X | Y]).
 
+divisina(FA_ID, RE) :-
+        RE =.. [X],
+        is_regexp([X]),
+        nfa_crea_automa(FA_ID, [X]).
+
 % -------------------- Funzione di inizio                
 
 nfa_regexp_comp(FA_ID, RE) :- 
@@ -176,31 +181,32 @@ nfa_crea_automa(FA_ID, [X | Y]) :-
 
 
 % -------------------- Controllo Input  
-nfa_controllo(FA_ID, StartID, [A | B], _) :- 
+nfa_controllo(FA_ID, StartID, [A | B]) :- 
         atomic(A),
         delta(FA_ID, StartID, A, StatoFinale),
-        nfa_controllo(FA_ID, StatoFinale, B, _).
+        nfa_controllo(FA_ID, StatoFinale, B).
 
-nfa_controllo(FA_ID, StartID, [A | B], _) :- 
+nfa_controllo(FA_ID, StartID, [A | B]) :- 
         atomic(A),
         delta(FA_ID, StartID, epsilonMossa, StatoFinale),
-        nfa_controllo(FA_ID, StatoFinale, [A | B], _).
+        nfa_controllo(FA_ID, StatoFinale, [A | B]).
 
 %Se la lista è vuota quando il controllo arriva al nodo finale 
 % allora l'input è stato "mangiato" correttamente dall'automa
-nfa_controllo(FA_ID, StartID, [], _) :- 
+nfa_controllo(FA_ID, StartID, []) :- 
         endAutoma(FA_ID, StartID).
 
-nfa_controllo(FA_ID, StartID, [], _) :- 
+nfa_controllo(FA_ID, StartID, []) :- 
         delta(FA_ID, StartID, epsilonMossa, StatoFinale),
-        nfa_controllo(FA_ID, StatoFinale, [], _).
+        nfa_controllo(FA_ID, StatoFinale, []).
 
 
 % -------------------- NFA REC
 nfa_rec(FA_ID, INPUT) :- 
+        nonvar(FA_ID),
         is_list(INPUT),
         startAutoma(FA_ID, StartID),
-        nfa_controllo(FA_ID, StartID, INPUT, _).
+        nfa_controllo(FA_ID, StartID, INPUT).
                          
 
 % -------------------- NFA CLEAR  
