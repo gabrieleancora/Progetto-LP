@@ -1,0 +1,341 @@
+Gottardi Elena 844626
+Calzari Alessia 844884
+PROGETTO "COMPILAZIONE DI REGEXP IN NFA" PROLOG Gennaio 2020
+
+-------------------- IS_REGEXP --------------------
+{ is_regex(RE) }
+{ is_regexp_lista([RE | REs]) }
+
+Il predicato is_regexp/1 si occupa di controllare se un dato input (RE)
+è una regexp 
+Per definizione, un atomo è una regexp, ma anche una sequenza o un'alternativa 
+tra regexp e/o atomi sono regexp
+Gli operatori seq/or li ho definiti "operatore_molti" in quanto richiedono 
+più argomenti
+Gli operatori star/plus li ho definiti "operatore_singolo" in quanto richiedono
+un solo argomento
+
+Caso 1: RE è un atomo, quindi è una regexp (per definizione)
+
+Caso 2: RE è un compound, divido l'input in una lista ([X | Xs])
+        - controllo se la testa è un operatore_molti (seq/or) richiamando i 
+          fatti operatore_molti(seq) e operatore_molti(or)
+          in caso affermativo controllo se Xs è una regexp richiamando
+          il predicato is_regexp_lista/1
+        - controllo se la testa è un operatore_singolo (star/plus) richiamando
+          i fatti operatore_singolo(star) e operatore_singolo(plus)
+          in caso affermativo controllo se Xs è una lista con un solo
+          elemento richiamando il fatto is_lista_singola([_])
+
+Il predicato is_regexp_lista/1 si occupa di controllare se la testa di un
+dato input (RE) è una regexp richiamando il predicato is_regexp/1 e richiamando 
+poi se stesso ricorsivamente passandogli il corpo dell'input (REs)
+
+-------------------- NFA_REGEXP_COMP --------------------
+{ nfa_regexp_comp(FA_Id, RE) }
+
+Il predicato nfa_regexp_comp/2 si occupa di restituire vero quando il primo
+argomento passatogli in input (FA_Id) è un identificatore valido e
+il secondo argomento passatogli in input (RE) è una regexp
+- controllo che FA_Id sia una stringa che non contiene variabili richiamando 
+  il predicato nonvar/1
+- controllo che RE sia una regexp richiamando il predicato is_regexp/1
+- richiamo il predicato nfa_crea_automa/2 per iniziare la costruzione 
+  dell'nfa
+
+-------------------- NFA_CREA_AUTOMA --------------------
+{ nfa_crea_automa(FA_Id, X) }
+
+Il predicato nfa_crea_automa/2 si occupa di indirizzare la creazione dell'nfa
+specifico per ogni caso
+
+Caso 1: se X è un atomo (atomic(X) vero)
+        - creo gli stati inziale e finale richiamando il predicato gensym/1
+        - li memorizzo richiamando il predicato assert/1
+        - creo infine la delta che va dallo stato iniziale allo stato finale
+          consumando X richiamando il predicato assert/1
+
+Caso 2: se X è un compound (atomic(X) falso)
+        - creo gli stati inziale e finale richiamando il predicato gensym/1
+        - li memorizzo richiamando il predicato assert/1
+        - divido la regexp in una lista ([A | As])
+        - richiamo il predicato riconosci_operatore/4 passandogli gli stati 
+          iniziale e finale appena creati e [A | As]
+
+-------------------- RICONOSCI_OPERATORE -------------------- 
+{ riconosci_operatore(FA_Id, Qi, Qf, [_]) }
+{ riconosci_operatore(FA_Id, Qi, Qf, [seq | Xs]) }
+{ riconosci_operatore(FA_Id, Qi, Qf, [or | Xs]) }
+{ riconosci_operatore(FA_Id, Qi, Qf, [star | Xs]) }
+{ riconosci_operatore(FA_Id, Qi, Qf, [plus | Xs]) }
+dove l'ultimo argomento è una regexp (RE)
+
+Il predicato riconosci_operatore/4 si occupa di riconoscere la struttura 
+della RE passatagli in ingresso (si occupa quindi di comprendere se si 
+tratta di un operatore_molti oppure di un operatore_singolo)
+e di richiamare i predicati nfa_crea_*/4 specifici
+
+Caso 1: la testa di RE è l'operatore seq
+        - se la testa del corpo di RE è un atomo richiamo il predicato
+          nfa_crea_seq/4 passandogli in ingresso gli stati iniziale e finale
+          e il corpo di RE (Xs)
+        - se la testa del corpo di RE è un compound richiamo il
+          predicato divisina/4 passandogli in ingresso gli stati iniziale e
+          finale e [seq | Xs]
+
+Caso 2: la testa di RE è l'operatore or
+richiamo il predicato nfa_crea_or/4 passandogli in ingresso 
+gli stati iniale e finale ed il corpo della RE (Xs)
+
+Caso 3: la testa di RE è l'operatore star
+richiamo il predicato nfa_crea_star/4 passandogli in ingresso 
+gli stati iniale e finale ed il corpo della RE (Xs)
+
+Caso 4: la testa di RE è l'operatore plus
+richiamo il predicato nfa_crea_plus/4 passandogli in ingresso 
+gli stati iniale e finale ed il corpo della RE (Xs)
+
+-------------------- DIVISINA --------------------
+
+Il predicato divisina/4 si occupa di controllare se all'interno di una regexp
+ho un'altra regexp
+Richiama il predicato riconosci_operatore/4 quando riconosce che la testa della
+sottolista che sta considerando non è atomica
+
+-------------------- NFA_CREA_OR --------------------
+{ nfa_crea_or(FA_Id, Qi, Qf, [A | As]) }
+dove l'ultimo argomento sono gli argomenti dell'or (Y)
+
+L'nfa di or(a,b) è:
+
+   -- epsilon --> Qepsilon1 -- a --> Qintermedio1 -- epsilon --> 
+Qi                                                               Qf
+   -- epsilon --> Qepsilon2 -- b --> Qintermedio2 -- epsilon -->
+
+Il predicato nfa_crea_or/2 si occupa di creare l'nfa specifico per
+l'operatore or
+
+Caso 1: la testa di Y è un atomo
+        - creo gli stati Qepsilon e Qintermedio richiamando il predicato gensym/1
+          e li memorizzo richiamando il predicato assert/1
+        - crea la prima delta che va dallo stato iniziale (passato in ingresso)
+          allo stato Qepsilon (appena creato) consumando una epsilon,
+          richiamando il predicato assert/1
+        - crea una seconda delta che va dallo stato Qepsilon allo stato
+          Qintermedio (appena creato) consumando la testa di RE,
+          richiamando il predicato assert/1
+        - crea una terza delta che va dallo stato Qintermedio allo stato finale
+          (passato in ingresso) consumando una epsilon,
+          richiamando il predicato assert/1
+        - richiama se stesso passandogli in ingresso il corpo di RE
+
+Caso 2: la testa di Y è un compound
+        - divido la testa di Y ulteriormente, creando quindi una nuova lista 
+          ([X | Xs])
+        - creo gli stati Qepsilon e Qintermedio richiamando il predicato gensym/1
+          e li memorizzo richiamando il predicato assert/1
+        - crea la prima delta che va dallo stato iniziale (passato in ingresso)
+          allo stato Qepsilon (appena creato) consumando una epsilon,
+          richiamando il predicato assert/1
+        - richiamo il predicato riconosci_operatore/4 passandoli in ingresso 
+          [X | Xs]
+        - crea una seconda delta che va dallo stato Qepsilon allo stato finale
+          (passato in ingresso) consumando una epsilon,
+          richiamando il predicato assert/1
+        - richiama se stesso passandogli in ingresso il corpo di RE 
+
+-------------------- NFA_CREA_SEQ --------------------
+{ nfa_crea_or(FA_Id, Qi, Qf, [A]) }
+{ nfa_crea_seq(FA_Id, Qi, Qf, [A | As]) } 
+dove l'ultimo argomento sono gli argomenti della seq (X)
+
+L'nfa di seq(a, b) è:
+
+Qi -- a --> Qintermedio -- epsilon --> QepsilonMossa -- b --> Qintermedio2 -- epsilon --> Qf
+
+Il predicato nfa_crea_seq/4 si occupa di creare l'nfa specifico per
+l'operatore seq
+
+Caso 1: X è un atomo
+        - creo lo stato Qintermedio richiamando il predicato gensym/1
+          e li memorizzo richiamando il predicato assert/1
+        - creo la prima delta che va dallo stato inziale (passato in ingresso)
+          allo stato Qintermedio (appena creato) consumando la testa 
+          di RE, richiamando il predicato assert/1
+        - creo una seconda delta che va dallo stato Qintermedio allo stato
+          finale (passato in ingresso) consumando una epsilon, 
+          richiamando il predicato assert/1
+
+Caso 2: X è un atomo seguito da altro
+        - creo gli stati Qintermedio e QepsilonMossa richiamando il predicato
+          gensym/1 e li memorizzo richiamando il predicato assert/1
+        - creo la prima delta che va dallo stato iniziale (passato in ingresso)
+          allo stato Qintermedio (appena creato) consumando X,
+          richiamando il predicato assert/1
+        - creo una seconda delta che va dallo stato Qintermedio allo stato
+          finale (passato in ingresso) consumando una epsilon,
+          richiamando il predicato assert/1
+        - richiamo il predicato divisina/4 passandogli il corpo di X
+
+-------------------- NFA_CREA_STAR --------------------
+{ nfa_crea_star(FA_Id, Qi, Qf, [A | As]) }
+{ nfa_crea_star(FA_Id, Qi, Qf, [A]) }
+dove l'ultimo argomento è l'argomento dello star (A)
+
+L'nfa di star(a) è:
+
+    ----------------------- epsilon -------------------------->
+Qi -- epsilon --> Qepsilon -- a --> Qintermedio -- epsilon --> Qf
+                    <------ epsilon ------
+
+Il predicato nfa_crea_star/4 si occupa di creare l'nfa specifico per
+l'operatore star
+
+Caso 1: A è un compound
+        - divido ulteriormente A creando una nuova lista ([X |Xs])
+        - creo gli stati Qepsilon e Qintermedio richiamando il predicato
+          gensym/1 e li memorizzo richiamando il predicato assert/1
+        - creo la prima delta che va dallo stato inziale (passato in ingresso)
+          allo stato Qepsilon (appena creato) consumando una epsilon,
+          richiamando il predicato assert/1
+        - richiamo il predicato riconosci_operatore/4 passandogli in ingresso
+          Qepsilon come stato inziale, Qintermedio (appena creato) come stato 
+          finale e [X | Xs] come ultimo argomento
+        - creo una seconda delta che va da Qintermedio allo stato finale
+          (passato in ingresso) consumando una epsilon,
+          richiamando il predicato assert/1
+        - creo una terza delta che va dallo stato Qintermedio allo stato
+          Qepsilon consumando una epsilon, richiamando il predicato
+          assert/1
+        - creo una quarta delta che va dallo stato inziale allo stato finale
+          consumando una epsilon, richiamando il predicato assert/1
+        - richiamo se stesso passandogli in ingresso lo stato inziale, lo
+          stato finale e As come ultimo argomento
+
+Caso 2: A è un atomo
+        - creo gli stati Qepsilon e Qintermedio richiamando il predicato
+          gensym/1 e li memorizzo richiamando il predicato assert/1
+        - creo la prima delta che va dallo stato inziale (passato in ingresso)
+          allo stato Qepsilon (appena creato) consumando una epsilon,
+          richiamando il predicato assert/1
+        - creo una seconda delta che va dallo stato Qepsilon allo stato 
+          Qintermedio (appena creato) consumando A,
+          richiamando il predicato assert/1
+        - creo una terza delta che va da Qintermedio allo stato finale
+          (passato in ingresso) consumando una epsilon,
+          richiamando il predicato assert/1
+        - creo una quarta delta che va dallo stato Qintermedio allo stato
+          Qepsilon consumando una epsilon, richiamando il predicato
+          assert/1
+        - creo una quinta delta che va dallo stato inziale allo stato finale
+          consumando una epsilon, richiamando il predicato assert/1
+
+-------------------- NFA_CREA_PLUS --------------------
+{ nfa_crea_plus(FA_Id, Qi, Qf, [A | As]) }
+{ nfa_crea_plus(FA_Id, Qi, Qf, [A]) }
+dove l'ultimo argomento è l'argomento del plus (A)
+
+L'nfa di plus(a) è:
+
+Qi -- epsilon --> Qepsilon -- a --> Qintermedio -- epsilon --> Qf
+                    <------ epsilon ------
+
+Il predicato nfa_crea_plus/4 si occupa di creare l'nfa specifico per
+l'operatore plus
+
+Caso 1: A è un compound
+        - divido ulteriormente A creando una nuova lista ([X |Xs])
+        - creo gli stati Qepsilon e Qintermedio richiamando il predicato
+          gensym/1 e li memorizzo richiamando il predicato assert/1
+        - creo la prima delta che va dallo stato inziale (passato in ingresso)
+          allo stato Qepsilon (appena creato) consumando una epsilon,
+          richiamando il predicato assert/1
+        - richiamo il predicato riconosci_operatore/4 passandogli in ingresso
+          Qepsilon come stato inziale, Qintermedio (appena creato) come stato 
+          finale e [X | Xs] come ultimo argomento
+        - creo una seconda delta che va da Qintermedio allo stato finale
+          (passato in ingresso) consumando una epsilon,
+          richiamando il predicato assert/1
+        - creo una terza delta che va dallo stato Qintermedio allo stato
+          Qepsilon consumando una epsilon, richiamando il predicato
+          assert/1
+        - richiamo se stesso passandogli in ingresso lo stato inziale, lo
+          stato finale e As come ultimo argomento
+
+Caso 2: A è un atomo
+        - creo gli stati Qepsilon e Qintermedio richiamando il predicato
+          gensym/1 e li memorizzo richiamando il predicato assert/1
+        - creo la prima delta che va dallo stato inziale (passato in ingresso)
+          allo stato Qepsilon (appena creato) consumando una epsilon,
+          richiamando il predicato assert/1
+        - creo una seconda delta che va dallo stato Qepsilon allo stato 
+          Qintermedio (appena creato) consumando A,
+          richiamando il predicato assert/1
+        - creo una terza delta che va da Qintermedio allo stato finale
+          (passato in ingresso) consumando una epsilon,
+          richiamando il predicato assert/1
+        - creo una quarta delta che va dallo stato Qintermedio allo stato
+          Qepsilon consumando una epsilon, richiamando il predicato
+          assert/1
+
+-------------------- NFA_TEST --------------------
+{ nfa_test(FA_Id, Input) }
+{ passa_input(FA_Id, Qi, Input) }
+
+Il predicato nfa_test/2 è vero quando l'input per l'automa FA_Id
+viene consumato completamente e l'automa si trova in uno stato finale
+
+Il predicato nfa_test/2:
+- controlla che FA_Id sia un identificatore valido (che non contenga variabili)
+  richiamando il predicato nonvar/1
+- dichiaro gli stati iniziale e finale
+- richiama il predicato passa_input/3
+
+Il predicato passa_input/3 si occupa di attraversare l'automa e di controllare
+se lo stato in cui mi trovo è finale
+
+Caso 1: l'input è una lista di più elementi
+        - divido l'input in una nuova lista ([A | As])
+        - "eseguo" la delta da Qi (passato in ingresso) ad un Qff consumando A
+        - richiamo se stesso passandogli in input Qff e As
+          (dove Qff sarà l'ultimo stato visitato)
+
+Caso 2: mi permette di eseguire le epsilon-mosse
+
+Caso 3: l'input è la lista vuota (ho letto tutto l'input)
+        in questo caso devo solamente verificare che lo stato in cui mi trovo,
+        ovvero Qi (l'ultimo "visitato"), sia finale
+        per controllare che sia finale richiamo il fatto nfa_final/2
+        passangoli in ingresso FA_Id e Qi 
+
+-------------------- NFA_LIST --------------------
+{ nfa_list(FA_Id) }
+{ nfa_list() }
+
+Il predicato nfa_list/1 si occupa di "listare" la struttura dell'automa
+con identificatore FA_Id passato in ingresso
+Richiamo il predicato listing/1 passandogli in ingresso gli stati iniziale
+e finale e la delta
+
+Il predicato nfa_list/0 si occupa di "listare" la struttura di tutti gli
+automi presenti nella base di dati
+Richiamo il predicato listing/1 passandogli in ingresso gli stati iniziale
+e finale e la delta
+
+-------------------- NFA_CLEAR --------------------
+{ nfa_clear(FA_Id) }
+{ nfa_clear() }
+
+Il predicato nfa_clear/1 si occupa di pulire la base di dati dall'automa
+con identificatore FA_Id pasatogli in ingresso
+Richiamo il predicato retractall/1 passandogli in ingresso:
+gli stati iniziale, finale, Qepsilon, Qintermedio e la delta
+Richiamo il predicato reset_gensym/1 che si occupa di azzerare il contatore
+utlizzato per identificare gli stati creati
+
+Il predicato nfa_clear/0 si occupa di pulire la base di dati da tutti gli
+automi
+Richiamo il predicato retractall/1 passandogli in ingresso:
+gli stati iniziale, finale, Qepsilon, Qintermedio e la delta
+Richiamo il predicato reset_gensym/0 che si occupa di azzerare il contatore
+utlizzato per identificare gli stati creati
