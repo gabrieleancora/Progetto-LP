@@ -1,4 +1,4 @@
-%%%%% RAPIDA GUIDA DI PORROLOG %%%%%
+    %%%%% RAPIDA GUIDA DI PORROLOG %%%%%
 % = non crea una sottolista ma fa solo un "puntatore". 
 % =.. invece la crea e quindi ridivide X
 % trace. per il debug
@@ -49,24 +49,22 @@ divisina(FA_ID, RE) :- RE =.. [X | Y],
 
                 
 
-nfa_regexp_comp(FA_ID, RE) :- divisina(FA_ID, RE).
+nfa_regexp_comp(FA_ID, RE) :- nonvar(FA_ID),
+                              divisina(FA_ID, RE).
 
-                              %%Se la testa è * + e il secondo elemento della coda è compound allora errore
+/* Creazione dell'Automa 
+        FUNZIONA - NON TOCCARE 
 
-
-/* Creazione dell'Automa */
+*/
 
 %StartID e EndID sono dell'OR locale 
 
-divisina_automa(FA_ID, [X | Y], StartID, EndID) :- X =.. [A | []],
-                                                    crea_stati_segno(FA_ID, [X | Y], StartID, EndID).
+divisina_automa(FA_ID, [X | Y], StartID, EndID) :- X =.. ['[|]' | A],
+                                                    crea_stati_segno(FA_ID, X, StartID, EndID),
+                                                    crea_stati_segno(FA_ID, Y, StartID, EndID).
 
 divisina_automa(FA_ID, [X | Y], StartID, EndID) :- X =.. [A | B],
                                                     crea_stati_segno(FA_ID, [A | B], StartID, EndID).
-
-% divisina_automa(FA_ID, [X | Y], StartID, EndID) :- compound(X), 
-%                                                    crea_stati_segno(FA_ID, [X | Y], StartID, EndID).
-
 
 %OR con primo elemento ATOMICO BOOOOM
 crea_stati_segno(FA_ID, ['/' | Y], StartID, EndID) :- Y = [A | B],
@@ -86,9 +84,8 @@ crea_stati_segno(FA_ID, ['/' | Y], StartID, EndID) :- Y = [A | B],
                                                       gensym(FA_ID, StatoUno),
                                                       gensym(FA_ID, StatoDue),
                                                       assert(delta(FA_ID, StartID, epsilonMossa, StatoUno)),
-                                                      A = [J | K],
-                                                      divisina_automa(FA_ID, [J | K], StatoUno, StatoDue),
-                                                      assert(delta(FA_ID, StatoUno, epsilonMossa, EndID)),
+                                                      divisina_automa(FA_ID, [A], StatoUno, StatoDue),
+                                                      assert(delta(FA_ID, StatoDue, epsilonMossa, EndID)),
                                                       crea_stati_segno(FA_ID, ['/' | B], StartID, EndID).
                                                                                                             
 %STAR atomico BOOOOM
@@ -139,9 +136,6 @@ crea_stati_segno(FA_ID, ['+' | Y], StartID, EndID) :- Y = [A | B],
                                                       Y = [J | K],
                                                       divisina_automa(FA_ID, [J | K], StatoUno, StatoDue).
 
-
-% replace('[', '#(', X, X)
-% replace(']', ')', X, X)
 %SEQ 
 crea_stati_segno(FA_ID, [X | []], StartID, EndID) :- atomic(X),
                                                      print("seq atom vuoto"),
@@ -170,6 +164,7 @@ crea_stati_segno(FA_ID, [X | Y], StartID, EndID) :- compound(X),
                                                     divisina_automa(FA_ID, [X], StartID, StatoUno),
                                                     assert(delta(FA_ID, StatoUno, epsilonMossa, StatoDue)),
                                                     crea_stati_segno(FA_ID, Y, StatoDue, EndID).
+
 
 nfa_crea_automa(FA_ID, [X | Y]) :- gensym(FA_ID, StartID),
                                    gensym(FA_ID, EndID),
