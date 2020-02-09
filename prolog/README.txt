@@ -1,12 +1,13 @@
-MATRICOLA NOME COGNOME
+844963 - Di Nuovo Gabriele
+845012 - Piccoli Matteo
 
-Il programma nfa.pl serve per gestire automi creati da Regular Expression(RE). 
+Il programma nfa.pl serve per gestire automi creati da Regular Expression(RE).
 Questo avviene usando quattro funzioni.
 
 is_regexp/1
     is_regexp(RE) => Controllo dell'input. Restituisce vero solo se l'input RE è un Regular Expression valida.
             Questo controllo avviene chiamando is_regexp ricorsivamente, differenziando solo se la lista in input è atomica o meno.
-            Questa funzione accetta un qualsiasi numero di simboli; mentre accetta solo gli operandi di :
+            Questa funzione accetta un qualsiasi numero di simboli, mentre accetta solo gli operandi di :
                 Operatore di sequenza (SEQ) => []
                 Operatore di unione (OR) => /
                 Chiusura di Kleene (STAR) => *
@@ -25,15 +26,16 @@ nfa_regexp_comp/2
 
 nfa_rec/2
     nfa_rec(FA_ID, INPUT) => Controlla che INPUT è consumato completamente dall'automa identificato da FA_ID, e che l'automa termini nel suo stato finale.
-    nfa_rec stabilisce il punto dell'automa in cui inizierà il controllo di INPUT.
+        nfa_rec stabilisce il punto dell'automa in cui inizierà il controllo di INPUT.
 
-    Una volta stabilito il punto di inizio, nfa_rec si appoggia alla funzione nfa_controllo/4. Questa seconda funzione percorre ricorsivamente l'automa FA_ID, e consuma una parte di INPUT quando necessario.
-    Quando nfa_controllo consuma tutto l'input controlla se si trova nello stato finale, o se esso è raggiungibile attraverso delle epsilon mosse.
-    Se è nello stato finale, INPUT è accettato dall'automa, e la funzione restituirà true.
+        Una volta stabilito il punto di inizio, nfa_rec si appoggia alla funzione nfa_controllo/4. Questa seconda funzione percorre ricorsivamente l'automa FA_ID, e consuma una parte di INPUT quando necessario.
+        Quando nfa_controllo consuma tutto l'input controlla se si trova nello stato finale, o se esso è raggiungibile attraverso delle epsilon mosse.
+        Se è nello stato finale, INPUT è accettato dall'automa, e la funzione restituirà true.
 
 
 nfa_clear/0
-    nfa_clear() => Cancella dalla base di dati tutti gli automi creati fino ad ora.
+    nfa_clear() => Cancella dalla base di dati tutti gli 
+                   automi creati fino ad ora.
 
 nfa_clear/1
     nfa_clear(FA_ID) => Cancella dalla base di dati l'automa FA_ID.
