@@ -29,16 +29,14 @@
 )
 
 
-
-; TODO bestemmiare
 (defun nfa-regexp-comp (RE)
     (if (is-regexp RE)
         (if (listp RE)
             (let ((PAPA (gensym "q")) (END (gensym "q"))) ; PAPA stato iniziale  END stato finale
-                (list (crea-automa RE PAPA END))  ; la lista funge da wrapper per l'automa
+                (append (list PAPA) (list END) (crea-automa RE PAPA END))  ; la lista funge da wrapper per l'automa
             )
             (let ((PAPA (gensym "q")) (END (gensym "q"))) ; PAPA stato iniziale  END stato finale
-                (list (crea-automa (list RE) PAPA END)))
+                (append (list PAPA) (list END) (crea-automa (list RE) PAPA END)))
         )
         NIL
     )
@@ -50,12 +48,11 @@
         (if (listp (car RE))
             (progn (crea-automa (car RE) PAPA END)
                 (crea-automa (cdr RE) PAPA END)
-                ; unione sottoliste
             )
             (cond 
                 ((equal (list (car RE)) '(*))
                     (let ((stato1 (gensym "q")) (stato2 (gensym "q")))
-                        (list (list PAPA 'epsilon END) 
+                        (append (list PAPA 'epsilon END) 
                         (list PAPA 'epsilon stato1)
                         (list stato2 'epsilon END)
                         (list stato2 'epsilon stato1)
@@ -67,7 +64,7 @@
                 )
                 ((equal (list (car RE)) '(+))
                     (let ((stato1 (gensym "q")) (stato2 (gensym "q")))
-                        (list (list PAPA 'epsilon stato1)
+                        (append (list PAPA 'epsilon stato1)
                         (list stato2 'epsilon END)
                         (list stato2 'epsilon stato1)
                         (if (listp (car (cdr RE)))
@@ -79,21 +76,23 @@
                 ((equal (list (car RE)) '([]))
                     (if (null (car (cdr (cdr RE)))) ; se siamo in fondo
                         (let ((stato1 (gensym "q")))
-                             (list (list stato1 'epsilon END) ;append invece che lista?
+                             (append ;append invece che lista?
                                 (if (listp (car (cdr RE)))
                                     (append (crea-automa (car (cdr RE)) PAPA stato1))
                                     (list PAPA (car (cdr RE)) stato1)
                                 )
+                                (list stato1 'epsilon END)
                              )
                                 ; se il cdr non è null allora crea stato2, automa cdr da stato1 a end, la epsilon mossa va da stato 1 a stato 2 
                         )
                         (let ((stato1 (gensym "q")) (stato2 (gensym "q")))
-                            (list (list stato1 'epsilon stato2)
+                            (append
                                 (if (listp (car (cdr RE)))
                                     (append (crea-automa (car (cdr RE)) PAPA stato1)) ;prima il car e PAPA erano invertiti
                                     (list PAPA (car (cdr RE)) stato1)
                                 )
                                 (append (crea-automa (append '([]) (cdr (cdr RE))) stato2 END))
+                                (list stato1 'epsilon stato2)
                             )
                         )
                     )
@@ -101,7 +100,7 @@
                 ((equal (list (car RE)) '(/) )
                     (if (null (car (cdr (cdr RE))))
                         (let ((stato1 (gensym "q")) (stato2 (gensym "q")))
-                            (list (list PAPA 'epsilon stato1)
+                            (append (list PAPA 'epsilon stato1)
                                 (list stato2 'epsilon END)
                                 (if (listp (car (cdr RE)))
                                     (append (crea-automa (car (cdr RE)) stato1 stato2))
@@ -110,7 +109,7 @@
                             )
                         )
                         (let ((stato1 (gensym "q")) (stato2 (gensym "q")))
-                            (list (list PAPA 'epsilon stato1)
+                            (append (list PAPA 'epsilon stato1)
                                 (list stato2 'epsilon END)
                                 (if (listp (car (cdr RE)))
                                     (append (crea-automa (car (cdr RE)) stato1 stato2))
