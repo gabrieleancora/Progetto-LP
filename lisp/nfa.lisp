@@ -1,5 +1,7 @@
 ;; SCIVOLA SCIVOLA SCIVOLA SCIVOLA SCIVOLA SCIVOLA SCIVOLA SCIVOLA SCIVOLA SCIVOLA SCIVOLA SCIVOLA 
+
 ;; (load "C:\\Users\\gabri\\Desktop\\Progetto\\Progetto LP\\lisp\\nfa.lisp")
+
 (defun is-regexp (RE)
   (if (not (listp RE))
     T
@@ -13,14 +15,14 @@
             (is-regexp (cdr RE)))
           ((equal (list (car RE)) '(*)) 
             (if (equal (list-length (cdr RE)) 1) 
-              NIL )
-              (is-regexp (cdr RE)))
+              (is-regexp (cdr RE))
+              NIL))
           ((equal (list (car RE)) '(/)) 
             (is-regexp (cdr RE)))
           ((equal (list (car RE)) '(+)) 
             (if (equal (list-length (cdr RE)) 1) 
-              NIL)
-              (is-regexp (cdr RE)))
+              (is-regexp (cdr RE))
+              NIL))
           (T (is-regexp (cdr RE)))
         )   
       )   
@@ -128,6 +130,79 @@
   )
 )
 
+(defun nfa-rec (FA_ID Input)
+    (if (listp FA_ID)
+      (let ((StatoIn (car FA_ID)) (StatoFin (car (cdr FA_ID))))
+        (elabora (cdr (cdr FA_ID)) Input StatoIn StatoFin (cddr FA_ID))
+    )
+    (print "Automa inesistente")
+  )
+)
+
+(defun elabora (FA_ID Input StatoIn StatoFin SupportList)
+  (print Input)
+  (print FA_ID)
+  (print StatoIn)
+  (print StatoFin)
+  (if (and (null SupportList) (null FA_ID))
+    (if (equal StatoIn StatoFin) 
+      T
+      NIL
+    )
+    (if (and (null Input) (not (null SupportList)))
+      (if (equal StatoIn StatoFin)
+        T
+        (elabora SupportList NIL StatoIn StatoFin NIL)
+        ;(print "fallito") ; Oppure qualcosa che torna indietro
+      )
+      (if (null FA_ID)
+        (elabora SupportList Input StatoIn StatoFin SupportList) ; oppure qualcosa che torna indietro
+        (if (equal (car FA_ID) StatoIn)
+          (cond
+            ((equal (car Input) (car (cdr FA_ID)))
+              (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin SupportList)
+              ;;(if ((elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin)) ; questa riga va rivista
+                ; in caso fallisce ^ ramo bisogna ri-elaborare partendo da qualche passaggio prima
+              ;;  T  
+              ;;  (elabora (cdddr (cdddr FA_ID) (cdr Input) (cdddr FA_ID) StatoFin ))
+              ) ;se fallisce deve passare al faid dopo a cazzum
+            ((equal 'EPSILON (car (cdr FA_ID)))
+              (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList)
+            )
+          )
+          (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList)
+        )
+      )
+    )
+  )
+)
+  ;; (if (null FA_ID)
+  ;;   (if (null Input)
+  ;;     (if (equal StatoIn StatoFin)
+  ;;           T
+  ;;           (print "NON FINALE VUOTO")
+  ;;     )
+  ;;     (print "NO FAID SI INPUT")
+  ;;   )
+  ;;   (if (null Input)
+  ;;     (if (equal StatoIn StatoFin)
+  ;;           T
+  ;;           (print "NO FAID NO INPUT NO FINALE" )
+  ;;     )
+  ;;     (if (equal (car FA_ID) StatoIn)
+  ;;       (cond
+  ;;         ((equal (car Input) (car (cdr FA_ID)))
+  ;;           (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin)) ;cadddr
+  ;;         ((equal 'EPSILON (car (cdr FA_ID)))
+  ;;           (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin )
+  ;;         )
+  ;;       )
+  ;;       (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin )
+  ;;     )
+  ;;   )
+  ;; )
 
 
+;;(#:|q3166| #:|q3167| 
 
+;; #:|q3166| A #:|q3168| #:|q3169| B #:|q3170| #:|q3170| EPSILON #:|q3167| #:|q3168| EPSILON #:|q3169|)
