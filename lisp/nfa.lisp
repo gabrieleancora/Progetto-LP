@@ -2,6 +2,15 @@
 
 ;; (load "C:\\Users\\gabri\\Desktop\\Progetto\\Progetto LP\\lisp\\nfa.lisp")
 
+;; (if (or (member (list StatoIn (cdr Input) (cdddr FA_ID))) (member (list StatoIn EPSILON (cdddr FA_ID))) ) ; Se esiste l'arco 1->A->2 o 1->E->2
+;;     (if (not (null (cdr Input)))
+;;       (elabora (cdddr FA_ID) (cdr Input) (cdddr FA_ID) StatoFin SupportList)
+;;       (elabora (cdddr FA_ID) Input (cdddr FA_ID) StatoFin SupportList)
+;;     )
+;;     NIL
+;;   )
+
+
 (defun is-regexp (RE)
   (if (not (listp RE))
     T
@@ -135,14 +144,14 @@
       (progn
         (setq VariabileLocaleCheNonTocco (car FA_ID))
         (let ((StatoIn (car FA_ID)) (StatoFin (car (cdr FA_ID))))
-          (elabora (cdr (cdr FA_ID)) Input StatoIn StatoFin (cddr FA_ID))
+          (elabora (cdr (cdr FA_ID)) Input StatoIn StatoFin (cddr FA_ID) (cddr FA_ID)) ; (cddr FA_ID)) ; (cdddr FA_ID) va messo solo se si usa il BLOCCO2
         )
      )
     (print "Automa inesistente")
   )
 )
 
-(defun elabora (FA_ID Input StatoIn StatoFin SupportList)
+(defun elabora (FA_ID Input StatoIn StatoFin SupportList Contatore) ; PER I BLOCCHI 2 metti contatore
   (print "---")
   (print Input)
   (print FA_ID)
@@ -154,80 +163,77 @@
 
   ; controlla se il tag è input o e, else parte da un passo indietro
 
-  (if (null Input)
-    (if (equal StatoIn StatoFin)
-      T ; a* funziona così?
-      (elabora FA_ID 'EPSILON StatoIn StatoFin SupportList)
-    )
-    (
-      (if (equal Input 'EPSILON)
-        (if (equal StatoIn Statofin)
-          T
-          (elabora (cdddr FA_ID) 'EPSILON StatoIn StatoFin SupportList) ; ultima support list prob sbagliata
+  ; BLOCCO 1 START
+  ; Accetta: NO SEQ - NO STAR - NO OR
+;;   (if (null Input)
+;;     (if (equal StatoIn StatoFin)
+;;       T ; a* funziona così?
+;;       (elabora FA_ID 'EPSILON StatoIn StatoFin SupportList)
+;;     )
+;;     (if (equal Input 'EPSILON)
+;;       (if (equal StatoIn Statofin)
+;;         T
+;;         (elabora (cdddr FA_ID) 'EPSILON StatoIn StatoFin SupportList) ; ultima support list prob sbagliata
+;;       )
+;;       (if (equal (cdr Input) (cddr FA_ID))
+;;         (elabora (cdddr FA_ID) (cdr Input) (cdddr StatoIn) StatoFin SupportList)
+;;         (elabora (cdddr FA_ID) Input StatoIn StatoFin SupportList)
+;;       )
+;;     )
+;;     )
+;; )
+  ;BLOCCO 1 END
+  
+  ; BLOCCO 2 STAT
+  ; Accetta: SEQ - STAR SINGOLA - OR SOLO PRIMO BRANCH - PLUS SEMPRE
+  (if (equal StatoIn StatoFin)
+    (if (null Input)
+      T
+      (if (null Contatore)
+        NIL
+        (if (null FA_ID)
+          (if (null SupportList)
+            (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin SupportList (cdddr Contatore)) ; oppure qualcosa che torna indietro
+            (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin (cdddr SupportList) Contatore) ; oppure qualcosa che torna indietro
+          )
+          (if (equal (car FA_ID) StatoIn)
+            (cond
+              ((equal (car Input) (car (cdr FA_ID)))
+                (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
+              )
+              ((equal 'EPSILON (car (cdr FA_ID)))
+                (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
+              )
+            )
+            (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList Contatore)
+          )
         )
-        (if (equal (cdr Input) (cddr FA_ID))
-          (elabora (cdddr FA_ID) (cdr Input) (cdddr StatoIn) StatoFin SupportList)
-          (elabora FA_ID Input (cdddr) StatoIn StatoFin SupportList)
+      )
+    )
+    (if (null Contatore)
+      NIL
+      (if (null FA_ID)
+        ;; (if (null SupportList)
+        ;;   (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin SupportList (cdddr Contatore)) ; oppure qualcosa che torna indietro
+        ;;   (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin (cdddr SupportList) Contatore) ; oppure qualcosa che torna indietro
+        ;; )
+        (elabora SupportList Input StatoIn StatoFin SupportList (cdddr Contatore)) ; oppure qualcosa che torna indietro
+        (if (equal (car FA_ID) StatoIn)
+          (cond
+            ((equal (car Input) (car (cdr FA_ID)))
+              (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
+            )
+            ((equal 'EPSILON (car (cdr FA_ID)))
+              (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
+            )
+          )
+          (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList Contatore)
         )
       )
     )
   )
-
-  (if (or (member (list StatoIn (cdr Input) (cdddr FA_ID))) (member (list StatoIn EPSILON (cdddr FA_ID))) ) ; Se esiste l'arco 1->A->2 o 1->E->2
-    (if (not (null (cdr Input)))
-      (elabora (cdddr FA_ID) (cdr Input) (cdddr FA_ID) StatoFin SupportList)
-      (elabora (cdddr FA_ID) Input (cdddr FA_ID) StatoFin SupportList)
-    )
-    NIL
-  )
-
-;;   (if (equal StatoIn StatoFin)
-;;     (if (null Input)
-;;       T
-;;       (if (null Contatore)
-;;         NIL
-;;         (if (null FA_ID)
-;;           (if (null SupportList)
-;;             (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin SupportList (cdddr Contatore)) ; oppure qualcosa che torna indietro
-;;             (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin (cdddr SupportList) Contatore) ; oppure qualcosa che torna indietro
-;;           )
-;;           (if (equal (car FA_ID) StatoIn)
-;;             (cond
-;;               ((equal (car Input) (car (cdr FA_ID)))
-;;                 (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
-;;               )
-;;               ((equal 'EPSILON (car (cdr FA_ID)))
-;;                 (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
-;;               )
-;;             )
-;;             (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList Contatore)
-;;           )
-;;         )
-;;       )
-;;     )
-;;     (if (null Contatore)
-;;       NIL
-;;       (if (null FA_ID)
-;;         ;; (if (null SupportList)
-;;         ;;   (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin SupportList (cdddr Contatore)) ; oppure qualcosa che torna indietro
-;;         ;;   (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin (cdddr SupportList) Contatore) ; oppure qualcosa che torna indietro
-;;         ;; )
-;;         (elabora SupportList Input StatoIn StatoFin SupportList (cdddr Contatore)) ; oppure qualcosa che torna indietro
-;;         (if (equal (car FA_ID) StatoIn)
-;;           (cond
-;;             ((equal (car Input) (car (cdr FA_ID)))
-;;               (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
-;;             )
-;;             ((equal 'EPSILON (car (cdr FA_ID)))
-;;               (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
-;;             )
-;;           )
-;;           (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList Contatore)
-;;         )
-;;       )
-;;     )
-;;   )
-;; )
+)
+; BLOCCO 2 END
 
   ;se stato finale
     ;se input not null
@@ -250,54 +256,59 @@
     ;se input not null (else)
       ;procedo normalmente
 
-  (if (equal StatoIn StatoFin)
-    (if (null Input)
-      T
-      (if (null SupportList)
-        NIL
-        (if (null FA_ID)
-          (elabora SupportList Input StatoIn StatoFin NIL)
-          (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin SupportList)
-        )
-        ;(elabora SupportList Input StatoIn StatoFin NIL)
-      )
-    )
-    (if (null Input)
-      (if (null SupportList)
-        NIL
-        (if (null FA_ID)
-          NIL
-          (if (and (equal 'EPSILON (car (cdr FA_ID))) (equal (car FA_ID) StatoIn ))
-            (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList)
-            (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList)
-          )
-        )
-      )
-      (if (null FA_ID)
-        (elabora SupportList Input StatoIn StatoFin SupportList) ; oppure qualcosa che torna indietro
-        (if (equal (car FA_ID) StatoIn)
-          (cond
-            ((equal (car Input) (car (cdr FA_ID)))
-              (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin SupportList)
-              ;;(if ((elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin)) ; questa riga va rivista
-                ; in caso fallisce ^ ramo bisogna ri-elaborare partendo da qualche passaggio prima
-              ;;  T  
-              ;;  (elabora (cdddr (cdddr FA_ID) (cdr Input) (cdddr FA_ID) StatoFin ))
-              ) ;se fallisce deve passare al faid dopo a cazzum
-            ((equal 'EPSILON (car (cdr FA_ID)))
-              (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList)
-            )
-          )
-          (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList)
-        )
-      )
-    )
-  )
-  )
 
 
+;; ; BLOCCO 3 START
+; Accetta: SEQ - NO STAR - NO OR
+;;   (if (equal StatoIn StatoFin)
+;;     (if (null Input)
+;;       T
+;;       (if (null SupportList)
+;;         NIL
+;;         (if (null FA_ID)
+;;           (elabora SupportList Input StatoIn StatoFin NIL)
+;;           (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin SupportList)
+;;         )
+;;         ;(elabora SupportList Input StatoIn StatoFin NIL)
+;;       )
+;;     )
+;;     (if (null Input)
+;;       (if (null SupportList)
+;;         NIL
+;;         (if (null FA_ID)
+;;           NIL
+;;           (if (and (equal 'EPSILON (car (cdr FA_ID))) (equal (car FA_ID) StatoIn ))
+;;             (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList)
+;;             (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList)
+;;           )
+;;         )
+;;       )
+;;       (if (null FA_ID)
+;;         (elabora SupportList Input StatoIn StatoFin SupportList) ; oppure qualcosa che torna indietro
+;;         (if (equal (car FA_ID) StatoIn)
+;;           (cond
+;;             ((equal (car Input) (car (cdr FA_ID)))
+;;               (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin SupportList)
+;;               ;;(if ((elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin)) ; questa riga va rivista
+;;                 ; in caso fallisce ^ ramo bisogna ri-elaborare partendo da qualche passaggio prima
+;;               ;;  T  
+;;               ;;  (elabora (cdddr (cdddr FA_ID) (cdr Input) (cdddr FA_ID) StatoFin ))
+;;               ) ;se fallisce deve passare al faid dopo a cazzum
+;;             ((equal 'EPSILON (car (cdr FA_ID)))
+;;               (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList)
+;;             )
+;;           )
+;;           (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList)
+;;         )
+;;       )
+;;     )
+;;   )
+;; )
+  ; BLOCCO 3 END
 
 
+  ; BLOCCO 4 START
+  ; Accetta: SEQ - NO OR - NO STELLA
 ;;   (if (and (null SupportList) (null FA_ID))
 ;;     (if (equal StatoIn StatoFin) 
 ;;       T
@@ -330,7 +341,11 @@
 ;;     )
 ;;   )
 ;; )
-;;   
+;BLOCCO 4 END   
+
+
+; BLOCCO 5 START
+; Accetta: niente
 ;; (if (null FA_ID)
 ;;   (if (null Input)
 ;;     (if (equal StatoIn StatoFin)
@@ -356,6 +371,8 @@
 ;;     )
 ;;   )
 ;; )
+;; )
+; BLOCCO 5 END
 
 
 ;;(#:|q3166| #:|q3167| 
