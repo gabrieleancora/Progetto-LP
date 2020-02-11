@@ -132,28 +132,146 @@
 
 (defun nfa-rec (FA_ID Input)
     (if (listp FA_ID)
-      (let ((StatoIn (car FA_ID)) (StatoFin (car (cdr FA_ID))))
-        (elabora (cdr (cdr FA_ID)) Input StatoIn StatoFin (cddr FA_ID))
-    )
+      (progn
+        (setq VariabileLocaleCheNonTocco (car FA_ID))
+        (let ((StatoIn (car FA_ID)) (StatoFin (car (cdr FA_ID))))
+          (elabora (cdr (cdr FA_ID)) Input StatoIn StatoFin (cddr FA_ID))
+        )
+     )
     (print "Automa inesistente")
   )
 )
 
 (defun elabora (FA_ID Input StatoIn StatoFin SupportList)
+  (print "---")
   (print Input)
   (print FA_ID)
+  ;se input null allora elimina le epsilon mosse PROBABILE
+  ;se l'input NON è null allora NON resettare SupportList
   (print StatoIn)
   (print StatoFin)
-  (if (and (null SupportList) (null FA_ID))
-    (if (equal StatoIn StatoFin) 
-      T
-      NIL
+;  (print Contatore)
+
+  ; controlla se il tag è input o e, else parte da un passo indietro
+
+  (if (null Input)
+    (if (equal StatoIn StatoFin)
+      T ; a* funziona così?
+      (elabora FA_ID 'EPSILON StatoIn StatoFin SupportList)
     )
-    (if (and (null Input) (not (null SupportList)))
-      (if (equal StatoIn StatoFin)
-        T
-        (elabora SupportList NIL StatoIn StatoFin NIL)
-        ;(print "fallito") ; Oppure qualcosa che torna indietro
+    (
+      (if (equal Input 'EPSILON)
+        (if (equal StatoIn Statofin)
+          T
+          (elabora (cdddr FA_ID) 'EPSILON StatoIn StatoFin SupportList) ; ultima support list prob sbagliata
+        )
+        (if (equal (cdr Input) (cddr FA_ID))
+          (elabora (cdddr FA_ID) (cdr Input) (cdddr StatoIn) StatoFin SupportList)
+          (elabora FA_ID Input (cdddr) StatoIn StatoFin SupportList)
+        )
+      )
+    )
+  )
+
+  (if (or (member (list StatoIn (cdr Input) (cdddr FA_ID))) (member (list StatoIn EPSILON (cdddr FA_ID))) ) ; Se esiste l'arco 1->A->2 o 1->E->2
+    (if (not (null (cdr Input)))
+      (elabora (cdddr FA_ID) (cdr Input) (cdddr FA_ID) StatoFin SupportList)
+      (elabora (cdddr FA_ID) Input (cdddr FA_ID) StatoFin SupportList)
+    )
+    NIL
+  )
+
+;;   (if (equal StatoIn StatoFin)
+;;     (if (null Input)
+;;       T
+;;       (if (null Contatore)
+;;         NIL
+;;         (if (null FA_ID)
+;;           (if (null SupportList)
+;;             (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin SupportList (cdddr Contatore)) ; oppure qualcosa che torna indietro
+;;             (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin (cdddr SupportList) Contatore) ; oppure qualcosa che torna indietro
+;;           )
+;;           (if (equal (car FA_ID) StatoIn)
+;;             (cond
+;;               ((equal (car Input) (car (cdr FA_ID)))
+;;                 (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
+;;               )
+;;               ((equal 'EPSILON (car (cdr FA_ID)))
+;;                 (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
+;;               )
+;;             )
+;;             (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList Contatore)
+;;           )
+;;         )
+;;       )
+;;     )
+;;     (if (null Contatore)
+;;       NIL
+;;       (if (null FA_ID)
+;;         ;; (if (null SupportList)
+;;         ;;   (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin SupportList (cdddr Contatore)) ; oppure qualcosa che torna indietro
+;;         ;;   (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin (cdddr SupportList) Contatore) ; oppure qualcosa che torna indietro
+;;         ;; )
+;;         (elabora SupportList Input StatoIn StatoFin SupportList (cdddr Contatore)) ; oppure qualcosa che torna indietro
+;;         (if (equal (car FA_ID) StatoIn)
+;;           (cond
+;;             ((equal (car Input) (car (cdr FA_ID)))
+;;               (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
+;;             )
+;;             ((equal 'EPSILON (car (cdr FA_ID)))
+;;               (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList Contatore)
+;;             )
+;;           )
+;;           (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList Contatore)
+;;         )
+;;       )
+;;     )
+;;   )
+;; )
+
+  ;se stato finale
+    ;se input not null
+    ;{
+      ;se supportList NULL
+        ;NIL
+      ;altrimenti
+        ;riparti da 0 con support NIL
+    ;}
+    ;altrimenti
+      ;TRUE
+  ;else
+    ;se l'input è null
+    ;{
+      ;Se supportList ESISTE
+        ;riparti da 0 con support NIL
+      ;altrimenti
+        ;NIL
+    ;}
+    ;se input not null (else)
+      ;procedo normalmente
+
+  (if (equal StatoIn StatoFin)
+    (if (null Input)
+      T
+      (if (null SupportList)
+        NIL
+        (if (null FA_ID)
+          (elabora SupportList Input StatoIn StatoFin NIL)
+          (elabora SupportList Input VariabileLocaleCheNonTocco StatoFin SupportList)
+        )
+        ;(elabora SupportList Input StatoIn StatoFin NIL)
+      )
+    )
+    (if (null Input)
+      (if (null SupportList)
+        NIL
+        (if (null FA_ID)
+          NIL
+          (if (and (equal 'EPSILON (car (cdr FA_ID))) (equal (car FA_ID) StatoIn ))
+            (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList)
+            (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList)
+          )
+        )
       )
       (if (null FA_ID)
         (elabora SupportList Input StatoIn StatoFin SupportList) ; oppure qualcosa che torna indietro
@@ -175,32 +293,69 @@
       )
     )
   )
-)
-  ;; (if (null FA_ID)
-  ;;   (if (null Input)
-  ;;     (if (equal StatoIn StatoFin)
-  ;;           T
-  ;;           (print "NON FINALE VUOTO")
-  ;;     )
-  ;;     (print "NO FAID SI INPUT")
-  ;;   )
-  ;;   (if (null Input)
-  ;;     (if (equal StatoIn StatoFin)
-  ;;           T
-  ;;           (print "NO FAID NO INPUT NO FINALE" )
-  ;;     )
-  ;;     (if (equal (car FA_ID) StatoIn)
-  ;;       (cond
-  ;;         ((equal (car Input) (car (cdr FA_ID)))
-  ;;           (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin)) ;cadddr
-  ;;         ((equal 'EPSILON (car (cdr FA_ID)))
-  ;;           (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin )
-  ;;         )
-  ;;       )
-  ;;       (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin )
-  ;;     )
-  ;;   )
-  ;; )
+  )
+
+
+
+
+;;   (if (and (null SupportList) (null FA_ID))
+;;     (if (equal StatoIn StatoFin) 
+;;       T
+;;       NIL
+;;     )
+;;     (if (and (null Input) (not (null SupportList)))
+;;       (if (equal StatoIn StatoFin)
+;;         T
+;;         (elabora SupportList NIL StatoIn StatoFin NIL)
+;;         ;(print "fallito") ; Oppure qualcosa che torna indietro
+;;       )
+;;       (if (null FA_ID)
+;;         (elabora SupportList Input StatoIn StatoFin SupportList) ; oppure qualcosa che torna indietro
+;;         (if (equal (car FA_ID) StatoIn)
+;;           (cond
+;;             ((equal (car Input) (car (cdr FA_ID)))
+;;               (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin SupportList)
+;;               ;;(if ((elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin)) ; questa riga va rivista
+;;                 ; in caso fallisce ^ ramo bisogna ri-elaborare partendo da qualche passaggio prima
+;;               ;;  T  
+;;               ;;  (elabora (cdddr (cdddr FA_ID) (cdr Input) (cdddr FA_ID) StatoFin ))
+;;               ) ;se fallisce deve passare al faid dopo a cazzum
+;;             ((equal 'EPSILON (car (cdr FA_ID)))
+;;               (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin SupportList)
+;;             )
+;;           )
+;;           (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin SupportList)
+;;         )
+;;       )
+;;     )
+;;   )
+;; )
+;;   
+;; (if (null FA_ID)
+;;   (if (null Input)
+;;     (if (equal StatoIn StatoFin)
+;;           T
+;;           (print "NON FINALE VUOTO")
+;;     )
+;;     (print "NO FAID SI INPUT")
+;;   )
+;;   (if (null Input)
+;;     (if (equal StatoIn StatoFin)
+;;           T
+;;           (print "NO FAID NO INPUT NO FINALE" )
+;;     )
+;;     (if (equal (car FA_ID) StatoIn)
+;;       (cond
+;;         ((equal (car Input) (car (cdr FA_ID)))
+;;           (elabora (cdr (cdr (cdr FA_ID))) (cdr Input) (car (cdr (cdr FA_ID))) StatoFin)) ;cadddr
+;;         ((equal 'EPSILON (car (cdr FA_ID)))
+;;           (elabora (cdr (cdr (cdr FA_ID))) Input (car (cdr (cdr FA_ID))) StatoFin )
+;;         )
+;;       )
+;;       (elabora (cdr (cdr (cdr FA_ID))) Input StatoIn StatoFin )
+;;     )
+;;   )
+;; )
 
 
 ;;(#:|q3166| #:|q3167| 
