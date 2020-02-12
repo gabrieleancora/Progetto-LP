@@ -152,13 +152,13 @@
 )
 
 (defun elabora (FA_ID Input StatoIn StatoFin SupportList Contatore) ; PER I BLOCCHI 2 metti contatore
-  (print "---")
-  (print Input)
-  (print FA_ID)
+  ;(print "---")
+  ;(print Input)
+  ;(print FA_ID)
   ;se input null allora elimina le epsilon mosse PROBABILE
   ;se l'input NON è null allora NON resettare SupportList
-  (print StatoIn)
-  (print StatoFin)
+  ;(print StatoIn)
+  ;(print StatoFin)
 ;  (print Contatore)
 
   ; controlla se il tag è input o e, else parte da un passo indietro
