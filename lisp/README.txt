@@ -1,5 +1,6 @@
-844963 - Di Nuovo Gabriele
-845012 - Piccoli Matteo
+Di Nuovo Gabriele - 844963
+Piccoli Matteo - 845012
+Riva Riccardo - 844936
 
 Il programma nfa.lisp serve per gestire automi creati da
 Regular Expression(RE).
@@ -18,7 +19,7 @@ Questo avviene usando quattro funzioni.
 	Inoltre controlla che ogni operatore abbia il giusto numero di parametri.
 	
 	esempio:
-		(is_regexp '([] a (+b) c)
+		(is_regexp '([] a (+b) c))
 
 (nfa_regexp_comp FA_ID RE)
 	Dato l'input RE crea il suo automa corrispondente FA_ID.
@@ -31,7 +32,7 @@ Questo avviene usando quattro funzioni.
 	pezzo di automa relativo all'operatore stesso.   
 
 	esempio:
-		(nfa_regexp_comp automa1 '(/ a b ([] c (*d)))
+		(nfa_regexp_comp automa1 '(/ a b ([] c (*d))))
 	
 (nfa_rec FA_ID INPUT) ;	
 	Controlla che INPUT venga consumato completamente dall'automa 
@@ -43,7 +44,7 @@ Questo avviene usando quattro funzioni.
 	stato finale.
 	
 	esempio:
-		(nfa_rec automa1 (c d d d)
+		(nfa_rec automa1 (c d d d))
 	
 
 

@@ -1,5 +1,6 @@
-%%% 844963 - Di Nuovo Gabriele
-%%% 845012 - Piccoli Matteo
+%% Di Nuovo Gabriele - 844963
+%% Piccoli Matteo - 845012
+%% Riva Riccardo - 844936
 
 % -------------------- Casi base 
 is_regexp([]).
@@ -191,7 +192,7 @@ nfa_controllo(FA_ID, StartID, [A | B]) :-
         delta(FA_ID, StartID, epsilonMossa, StatoFinale),
         nfa_controllo(FA_ID, StatoFinale, [A | B]).
 
-%Se la lista è vuota quando il controllo arriva al nodo finale 
+% Se la lista è vuota quando il controllo arriva al nodo finale 
 % allora l'input è stato "mangiato" correttamente dall'automa
 nfa_controllo(FA_ID, StartID, []) :- 
         endAutoma(FA_ID, StartID).
