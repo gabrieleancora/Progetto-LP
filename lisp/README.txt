@@ -1,6 +1,5 @@
 Di Nuovo Gabriele - 844963
 Piccoli Matteo - 845012
-Riva Riccardo - 844936
 
 Il programma nfa.lisp serve per gestire automi creati da
 Regular Expression(RE).

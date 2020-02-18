@@ -1,6 +1,5 @@
 ;; Di Nuovo Gabriele - 844963
 ;; Piccoli Matteo - 845012
-;; Riva Riccardo - 844936
 
 ;; (load "C:\\Users\\gabri\\Desktop\\Progetto\\Progetto LP\\lisp\\nfa.lisp") 
 

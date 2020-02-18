@@ -1,6 +1,5 @@
 %% Di Nuovo Gabriele - 844963
 %% Piccoli Matteo - 845012
-%% Riva Riccardo - 844936
 
 % -------------------- Casi base 
 is_regexp([]).
